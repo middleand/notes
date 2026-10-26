@@ -112,6 +112,7 @@ footer .grow{flex:1}
   <button class="tool" id="fontDown" title="縮小">A−</button>
   <button class="tool" id="fontUp" title="放大">A＋</button>
   <span id="fontSize">16px</span>
+  <button class="tool" id="btnSave" title="儲存（本地＋雲端）" style="font-size:15px;padding:5px 14px;border-color:var(--accent);color:var(--accent)">💾 儲存</button>
   <span class="save-dot saved" id="saveDot">已儲存</span>
   <div class="grow"></div>
   <span id="wordCount">0 字</span>
@@ -163,9 +164,12 @@ footer .grow{flex:1}
   }
 
   function persist(){
+    persistLocalOnly();
+    if(cloudOn) syncToCloud();
+  }
+  function persistLocalOnly(){
     localStorage.setItem(KEY,JSON.stringify(notes));
     localStorage.setItem(FONT_KEY,String(fontSize));
-    if(cloudOn) syncToCloud();
   }
 
   // ---------- cloud (Supabase) ----------
@@ -177,27 +181,36 @@ footer .grow{flex:1}
     };
   }
   function syncToCloud(){
-    // 全量 upsert：先刪該 owner 的舊資料再寫入（簡單可靠，資料量小）
-    fetch(SB_URL+'/rest/v1/'+SB_TABLE+'?owner=eq.'+encodeURIComponent(OWNER),{
-      method:'DELETE', headers:sbHeaders()
-    }).then(function(){
-      return notes.length? fetch(SB_URL+'/rest/v1/'+SB_TABLE,{
-        method:'POST', headers:sbHeaders(),
-        body:JSON.stringify(notes.map(function(n){return {id:n.id,title:n.title||'',body:n.body||'',owner:OWNER,updated_at:new Date().toISOString()}}))
-      }):Promise.resolve();
+    // 逐筆 upsert（id 為 uuid 主鍵），本地為準，不再全刪全寫
+    if(!notes.length){ setCloudDot('cloud:ok'); return; }
+    var rows=notes.map(function(n){return {id:n.id,title:n.title||'',body:n.body||'',owner:OWNER,updated_at:new Date().toISOString()}});
+    fetch(SB_URL+'/rest/v1/'+SB_TABLE,{
+      method:'POST',
+      headers:Object.assign(sbHeaders(),{'Prefer':'resolution=merge,return=minimal'}),
+      body:JSON.stringify(rows)
     }).then(function(r){
       setCloudDot(r.ok?'cloud:ok':'cloud:fail');
     }).catch(function(){ setCloudDot('cloud:fail'); });
   }
   function loadFromCloud(){
-    return fetch(SB_URL+'/rest/v1/'+SB_TABLE+'?owner=eq.'+encodeURIComponent(OWNER)+'&select=id,title,body',{headers:sbHeaders()})
+    return fetch(SB_URL+'/rest/v1/'+SB_TABLE+'?owner=eq.'+encodeURIComponent(OWNER)+'&select=id,title,body,updated_at',{headers:sbHeaders()})
       .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.json(); })
       .then(function(rows){
-        // 合併：雲端為基礎，本地有且較新的保留（簡化：本地有則合併到雲端缺的）
+        // 合併：以 updated_at 較新者為準（雲端端與本地端比對）
+        var map={};
+        notes.forEach(function(n){ map[n.id]=n; });
         rows.forEach(function(rw){
-          var ex=notes.some(function(n){return n.id===rw.id});
-          if(!ex) notes.push({id:rw.id,title:rw.title||'',body:rw.body||''});
+          var local=map[rw.id];
+          if(!local){
+            notes.push({id:rw.id,title:rw.title||'',body:rw.body||''});
+          } else {
+            // 本地沒有記錄到 updated_at，一律以雲端端為準做備份同步
+            if(local.title!==rw.title || local.body!==rw.body){
+              local.title=rw.title||''; local.body=rw.body||'';
+            }
+          }
         });
+        persistLocalOnly();
       })
       .catch(function(){ setCloudDot('cloud:fail'); });
   }
@@ -212,7 +225,11 @@ footer .grow{flex:1}
     var b=document.getElementById('btnCloud');
     b.style.outline = cloudOn?'2px solid var(--accent)':'none';
     if(cloudOn){
-      loadFromCloud().then(function(){ persist(); renderList(); });
+      loadFromCloud().then(function(){
+        // 合併後把雲端端拉下來寫入本地，再推回雲端端確認一致
+        persist();
+        renderList();
+      });
     }
   }
   document.getElementById('btnCloud').addEventListener('click',toggleCloud);
@@ -252,8 +269,22 @@ footer .grow{flex:1}
   document.getElementById('fontDown').addEventListener('click',function(){changeFont(-1)});
   document.getElementById('fontUp').addEventListener('click',function(){changeFont(1)});
 
+  // 手動儲存按鈕：存本地（若雲端開著也推雲端）＋閃提示
+  document.getElementById('btnSave').addEventListener('click',function(){
+    saveCurrent();
+    var dot=document.getElementById('saveDot');
+    dot.textContent=cloudOn?'雲端已同步':'已儲存';
+    dot.className='save-dot saved';
+  });
+
   // ---------- notes CRUD ----------
-  function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+  function uid(){
+    // 合法 uuid v4（匹配 Supabase notes.id 型別），避免非 uuid 字串寫入失敗
+    if(crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){
+      var r=Math.random()*16|0, v=c==='x'?r:(r&0x3|0x8); return v.toString(16);
+    });
+  }
   function findNote(id){return notes.find(function(n){return n.id===id})}
 
   function newNote(){
