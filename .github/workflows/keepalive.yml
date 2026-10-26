@@ -1,0 +1,22 @@
+name: Supabase Keepalive
+
+on:
+  schedule:
+    - cron: '30 23 * * *'   # 每天 23:30 UTC = 台北早上 07:30
+  workflow_dispatch:          # 允許手動觸發
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: sb_publishable_x4oh6CfucTug7s6eFKnB7w_S_yyUXUv" \
+            -H "Authorization: Bearer sb_publishable_x4oh6CfucTug7s6eFKnB7w_S_yyUXUv" \
+            "https://yatsoejytdrscwrovpgf.supabase.co/rest/v1/notes?select=id&limit=1")
+          echo "Supabase responded: HTTP $code"
+          test "$code" = "200"
+
+      - name: Keep workflow alive (avoid 60-day auto-disable)
+        uses: gautamkrishnar/keepalive-workflow@v2
