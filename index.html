@@ -1,272 +1,434 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>多功能筆記本</title>
 <style>
 :root{
-  --bg:#f6f4ef;--panel:#ffffff;--side:#efece4;--text:#2b2a27;--muted:#8a867c;
-  --accent:#d9822b;--border:#e1ddd2;--shadow:0 8px 30px rgba(0,0,0,.12);
-  --fs:17px;--ff:system-ui,-apple-system,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --bg:#f6f7fb; --panel:#fff; --text:#1c2333; --sub:#6b7385;
+  --line:#e4e7ef; --accent:#3b6cff; --accent-soft:#e8efff;
+  --save:#2fad60; --warn:#f88f1b; --shadow:0 8px 24px rgba(20,30,60,.08);
 }
-:root[data-theme="dark"]{
-  --bg:#17181c;--panel:#1f2127;--side:#1b1c21;--text:#e8e6e1;--muted:#8d8f98;
-  --accent:#f0a24b;--border:#2d3038;--shadow:0 8px 30px rgba(0,0,0,.5);
+[data-theme="dark"]{
+  --bg:#0f1420; --panel:#182033; --text:#e9edf6; --sub:#8f98ad;
+  --line:#2a3348; --accent:#5b84ff; --accent-soft:#22304d;
+  --shadow:0 8px 24px rgba(0,0,0,.4);
 }
-*{box-sizing:border-box}
-html,body{height:100%;margin:0}
-body{background:var(--bg);color:var(--text);font-family:var(--ff);transition:background .3s,color .3s}
-button{font:inherit;color:inherit;cursor:pointer}
-.app{display:grid;grid-template-columns:300px 1fr;height:100%}
-aside{background:var(--side);border-right:1px solid var(--border);display:flex;flex-direction:column;min-height:0}
-.top{display:flex;gap:8px;align-items:center;padding:14px;border-bottom:1px solid var(--border)}
-.top h1{font-size:18px;margin:0;flex:1}
-.ibtn{border:1px solid var(--border);background:var(--panel);border-radius:10px;min-width:38px;height:38px;display:grid;place-items:center;font-size:16px;transition:.2s}
-.ibtn:hover{border-color:var(--accent);color:var(--accent)}
-.ibtn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
-.tools{padding:12px 14px;display:flex;flex-direction:column;gap:10px}
-.tools input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--panel);color:var(--text);font:inherit;font-size:14px}
-.tools input:focus,#title:focus{outline:2px solid var(--accent);outline-offset:0}
-.newbtn{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:10px;font-weight:600}
-.tags{display:flex;gap:6px;flex-wrap:wrap}
-.chip{font-size:12px;padding:4px 10px;border-radius:99px;border:1px solid var(--border);background:var(--panel);color:var(--muted)}
-.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
-#list{flex:1;overflow:auto;padding:4px 10px 14px;margin:0;list-style:none}
-#list li{padding:11px 12px;border-radius:10px;cursor:pointer;margin-bottom:4px;border:1px solid transparent}
-#list li:hover{background:var(--panel)}
-#list li.active{background:var(--panel);border-color:var(--accent)}
-#list .t{font-weight:600;font-size:14px;display:flex;gap:6px;align-items:center}
-#list .t span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#list .p{font-size:12px;color:var(--muted);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#list .d{font-size:11px;color:var(--muted);margin-top:3px}
-main{display:flex;flex-direction:column;min-width:0;min-height:0}
-.bar{display:flex;gap:8px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
-.bar .sp{flex:1}
-.menu{display:none}
-#title{flex:1;min-width:140px;border:0;background:transparent;color:var(--text);font:inherit;font-size:22px;font-weight:700;padding:6px 8px;border-radius:8px}
-.editor{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
-#body{flex:1;width:100%;border:0;resize:none;background:var(--panel);color:var(--text);font-family:var(--ff);font-size:var(--fs);line-height:var(--lh,1.8);padding:24px clamp(18px,5vw,64px);outline:none;transition:background .3s}
-.status{display:flex;gap:14px;padding:8px 18px;font-size:12px;color:var(--muted);border-top:1px solid var(--border)}
-.status .sp{flex:1}
-.empty{flex:1;display:grid;place-items:center;color:var(--muted);text-align:center;padding:30px}
-.pop{position:absolute;right:18px;top:62px;z-index:20;width:280px;background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:16px;display:none}
-.pop.show{display:block}
-.pop h3{margin:0 0 12px;font-size:14px}
-.pop label{display:block;font-size:12px;color:var(--muted);margin:12px 0 6px}
-.pop input[type=range]{width:100%;accent-color:var(--accent)}
-.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.seg button{border:1px solid var(--border);background:var(--bg);border-radius:8px;padding:8px 2px;font-size:13px}
-.seg button.on{border-color:var(--accent);color:var(--accent);font-weight:700}
-.row{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)}
-.row b{color:var(--text)}
-.reset{margin-top:14px;width:100%;border:1px solid var(--border);background:transparent;border-radius:8px;padding:8px;font-size:13px}
-@media(max-width:760px){
-  .app{grid-template-columns:1fr}
-  aside{position:fixed;inset:0 25% 0 0;z-index:30;transform:translateX(-100%);transition:transform .25s;box-shadow:var(--shadow)}
-  aside.open{transform:none}
-  .menu{display:grid}
-  .pop{right:10px;left:10px;width:auto}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC","PingFang TC",sans-serif;
+  background:var(--bg);color:var(--text);display:flex;flex-direction:column;
+  height:100vh;height:100dvh;overflow:hidden;transition:background .25s,color .25s}
+
+/* Top bar */
+header{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--panel);
+  border-bottom:1px solid var(--line);box-shadow:var(--shadow);z-index:5;
+  padding-top:calc(10px + env(safe-area-inset-top))}
+header .logo{font-weight:800;font-size:17px;letter-spacing:.5px;white-space:nowrap}
+header .logo span{color:var(--accent)}
+.spacer{flex:1}
+.btn{border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:10px;
+  padding:7px 11px;font-size:15px;cursor:pointer;display:flex;align-items:center;gap:5px;
+  transition:transform .08s,background .2s;white-space:nowrap}
+.btn:active{transform:scale(.94)}
+.btn:hover{background:var(--accent-soft)}
+.btn .txt{font-size:12px;color:var(--sub);font-weight:600}
+select#note{border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:9px;
+  padding:7px 9px;font-size:14px;max-width:42vw;cursor:pointer}
+
+/* Workspace */
+main{flex:1;display:flex;min-height:0}
+
+/* Sidebar */
+aside{width:168px;min-width:168px;border-right:1px solid var(--line);background:var(--panel);
+  overflow-y:auto;padding:10px 8px;transition:width .2s,opacity .2s}
+aside h3{font-size:12px;color:var(--sub);margin:4px 6px 8px;letter-spacing:.5px}
+aside .new{width:100%;text-align:left;padding:9px;border-radius:9px;border:1px dashed var(--line);
+  background:transparent;color:var(--accent);font-weight:600;font-size:14px;cursor:pointer;margin-bottom:10px}
+.item{padding:9px 10px;border-radius:9px;cursor:pointer;font-size:14px;margin-bottom:4px;
+  border:1px solid transparent}
+.item:hover{background:var(--accent-soft)}
+.item.active{background:var(--accent-soft);border-color:var(--accent);font-weight:600}
+.item .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.item .d{font-size:11px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.empty{font-size:13px;color:var(--sub);padding:6px 10px}
+
+/* Editor */
+.editor{flex:1;display:flex;flex-direction:column;min-width:0}
+.note-title{padding:12px 16px 0;font-size:20px;font-weight:800;border:none;outline:none;background:transparent;color:var(--text);width:100%}
+textarea#body{flex:1;padding:10px 16px;border:none;outline:none;resize:none;background:transparent;color:var(--text);
+  font-family:inherit;line-height:1.7;min-height:0}
+
+/* Status bar */
+footer{display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--panel);
+  border-top:1px solid var(--line);font-size:12px;color:var(--sub);
+  padding-bottom:calc(8px + env(safe-area-inset-bottom))}
+footer .grow{flex:1}
+.save-dot{font-weight:700}
+.save-dot.saved{color:var(--save)}
+.save-dot.pending{color:var(--warn)}
+.tool{border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:8px;
+  padding:5px 9px;font-size:13px;font-weight:700;cursor:pointer}
+.tool:active{transform:scale(.93)}
+
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(10,14,25,.5);display:none;align-items:center;justify-content:center;z-index:50}
+.modal-bg.show{display:flex}
+.modal{background:var(--panel);border-radius:16px;padding:18px;width:88%;max-width:340px;box-shadow:var(--shadow)}
+.modal h4{margin:0 0 12px;font-size:16px}
+.modal .row{display:flex;gap:8px;flex-wrap:wrap}
+.modal .row .btn{flex:1;justify-content:center}
+
+@media (max-width:600px){
+  aside{width:128px;min-width:128px}
 }
 </style>
 </head>
 <body>
-<div class="app">
-  <aside id="side">
-    <div class="top">
-      <h1>📒 我的筆記</h1>
-      <button class="ibtn" id="exportAll" title="匯出全部 (JSON)">⬇</button>
-    </div>
-    <div class="tools">
-      <button class="newbtn" id="newBtn">＋ 新增筆記</button>
-      <input id="search" placeholder="搜尋標題或內容…" type="search">
-      <div class="tags" id="filters"></div>
-    </div>
-    <ul id="list"></ul>
+<header>
+  <div class="logo">✎ <span>多功能</span> 筆記本</div>
+  <div class="spacer"></div>
+  <button class="btn" id="btnTheme" title="日夜切換">🌙 <span class="txt">模式</span></button>
+  <button class="btn" id="btnFont" title="字級">Aa <span class="txt">字級</span></button>
+  <button class="btn" id="btnCloud" title="雲端同步">☁️ <span class="txt">雲端</span></button>
+  <button class="btn" id="btnMore" title="更多">⋯</button>
+</header>
+
+<main>
+  <aside id="sidebar">
+    <h3>我的筆記</h3>
+    <button class="new" id="btnNew">＋ 新增筆記</button>
+    <div id="list"></div>
   </aside>
 
-  <main>
-    <div class="bar">
-      <button class="ibtn menu" id="menu" title="清單">☰</button>
-      <input id="title" placeholder="標題" maxlength="120">
-      <button class="ibtn" id="pin" title="釘選">📌</button>
-      <button class="ibtn" id="copy" title="複製內容">⧉</button>
-      <button class="ibtn" id="dl" title="下載為 .txt">⇩</button>
-      <button class="ibtn" id="del" title="刪除">🗑</button>
-      <span class="sp"></span>
-      <button class="ibtn" id="aa" title="字體設定" style="font-weight:700">Aa</button>
-      <button class="ibtn" id="theme" title="日夜切換">🌙</button>
+  <div class="editor">
+    <input id="title" class="note-title" placeholder="標題" autocomplete="off">
+    <textarea id="body" placeholder="在這裡開始記下想法…" spellcheck="false"></textarea>
+  </div>
+</main>
+
+<footer>
+  <button class="tool" id="fontDown" title="縮小">A−</button>
+  <button class="tool" id="fontUp" title="放大">A＋</button>
+  <span id="fontSize">16px</span>
+  <span class="save-dot saved" id="saveDot">已儲存</span>
+  <div class="grow"></div>
+  <span id="wordCount">0 字</span>
+  <button class="tool" id="btnExport" title="匯出">⤓</button>
+  <button class="tool" id="btnDelete" title="刪除">🗑</button>
+</footer>
+
+<!-- 匯出 / 匯入 modal -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h4 id="modalTitle">操作</h4>
+    <div class="row">
+      <button class="btn" id="modalOk">確認</button>
+      <button class="btn" id="modalCancel">取消</button>
     </div>
-    <div class="editor" id="editor">
-      <div class="pop" id="pop">
-        <h3>字體設定</h3>
-        <label>字型</label>
-        <div class="seg" id="ffSeg">
-          <button data-f="sans">黑體</button>
-          <button data-f="serif">明體</button>
-          <button data-f="mono">等寬</button>
-          <button data-f="hand">手寫</button>
-        </div>
-        <label><span class="row"><span>字級</span><b id="fsVal">17px</b></span></label>
-        <input type="range" id="fs" min="12" max="32" step="1">
-        <label><span class="row"><span>行距</span><b id="lhVal">1.8</b></span></label>
-        <input type="range" id="lh" min="1.2" max="2.6" step="0.1">
-        <button class="reset" id="reset">還原預設</button>
-      </div>
-      <textarea id="body" placeholder="開始寫點什麼…"></textarea>
-      <div class="empty" id="empty" hidden>沒有筆記。按左側「新增筆記」開始。</div>
-    </div>
-    <div class="status"><span id="count">0 字</span><span id="tagInfo"></span><span class="sp"></span><span id="saved">已儲存</span></div>
-  </main>
+  </div>
 </div>
 
 <script>
-(()=>{
-const $=s=>document.querySelector(s);
-const KEY='notebook.v1', SKEY='notebook.settings.v1';
-const FONTS={
-  sans:'system-ui,-apple-system,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif',
-  serif:'"Noto Serif TC","Songti TC","PMingLiU",Georgia,serif',
-  mono:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',
-  hand:'"Kaiti TC","DFKai-SB","BiauKai","Comic Sans MS",cursive'
-};
-const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}};
-const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+(function(){
+  var KEY='notepad.data.v1';
+  var THEME_KEY='notepad.theme';
+  var FONT_KEY='notepad.font';
+  var CLOUD_KEY='notepad.cloud';
+  // Supabase 雲端同步（ anon 等級，公開可讀寫）
+  var SB_URL='https://yatsoejytdrscwrovpgf.supabase.co';
+  var SB_KEY='sb_publishable_x4oh6CfucTug7s6eFKnB7w_S_yyUXUv';
+  var SB_TABLE='notes';
+  var OWNER='me';
+  var cloudOn=false;
+  var notes=[];        // [{id,title,body}]
+  var currentId=null;
+  var fontSize=16;
+  var saveTimer=null;
 
-let notes=load(KEY,[]);
-let settings=Object.assign({theme:null,font:'sans',size:17,lh:1.8},load(SKEY,{}));
-let currentId=null, filterTag=null, timer;
+  // ---------- load ----------
+  function load(){
+    var raw=null;
+    try{ raw=localStorage.getItem(KEY); }catch(e){}
+    if(raw){
+      var parsed=JSON.parse(raw);
+      if(Array.isArray(parsed)) notes=parsed;
+    }
+    var t=null; try{t=localStorage.getItem(THEME_KEY)}catch(e){}
+    if(!t){ t=(matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light'; }
+    applyTheme(t);
+    fontSize=parseInt(localStorage.getItem(FONT_KEY)||'16',10)||16;
+    applyFont();
+  }
 
-// theme: default to system, then user's choice
-if(!settings.theme) settings.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+  function persist(){
+    localStorage.setItem(KEY,JSON.stringify(notes));
+    localStorage.setItem(FONT_KEY,String(fontSize));
+    if(cloudOn) syncToCloud();
+  }
 
-function applySettings(){
-  const r=document.documentElement;
-  r.dataset.theme=settings.theme;
-  r.style.setProperty('--ff',FONTS[settings.font]);
-  r.style.setProperty('--fs',settings.size+'px');
-  r.style.setProperty('--lh',settings.lh);
-  $('#theme').textContent=settings.theme==='dark'?'☀️':'🌙';
-  $('#fs').value=settings.size;$('#fsVal').textContent=settings.size+'px';
-  $('#lh').value=settings.lh;$('#lhVal').textContent=settings.lh;
-  document.querySelectorAll('#ffSeg button').forEach(b=>b.classList.toggle('on',b.dataset.f===settings.font));
-  save(SKEY,settings);
-}
+  // ---------- cloud (Supabase) ----------
+  function sbHeaders(){
+    return {
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer '+SB_KEY,
+      'Content-Type': 'application/json'
+    };
+  }
+  function syncToCloud(){
+    // 全量 upsert：先刪該 owner 的舊資料再寫入（簡單可靠，資料量小）
+    fetch(SB_URL+'/rest/v1/'+SB_TABLE+'?owner=eq.'+encodeURIComponent(OWNER),{
+      method:'DELETE', headers:sbHeaders()
+    }).then(function(){
+      return notes.length? fetch(SB_URL+'/rest/v1/'+SB_TABLE,{
+        method:'POST', headers:sbHeaders(),
+        body:JSON.stringify(notes.map(function(n){return {id:n.id,title:n.title||'',body:n.body||'',owner:OWNER,updated_at:new Date().toISOString()}}))
+      }):Promise.resolve();
+    }).then(function(r){
+      setCloudDot(r.ok?'cloud:ok':'cloud:fail');
+    }).catch(function(){ setCloudDot('cloud:fail'); });
+  }
+  function loadFromCloud(){
+    return fetch(SB_URL+'/rest/v1/'+SB_TABLE+'?owner=eq.'+encodeURIComponent(OWNER)+'&select=id,title,body',{headers:sbHeaders()})
+      .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.json(); })
+      .then(function(rows){
+        // 合併：雲端為基礎，本地有且較新的保留（簡化：本地有則合併到雲端缺的）
+        rows.forEach(function(rw){
+          var ex=notes.some(function(n){return n.id===rw.id});
+          if(!ex) notes.push({id:rw.id,title:rw.title||'',body:rw.body||''});
+        });
+      })
+      .catch(function(){ setCloudDot('cloud:fail'); });
+  }
+  function setCloudDot(state){
+    var dot=document.getElementById('saveDot');
+    if(state==='cloud:ok'){ dot.textContent='雲端已同步'; dot.className='save-dot saved'; }
+    else if(state==='cloud:fail'){ dot.textContent='雲端失敗'; dot.className='save-dot pending'; }
+  }
+  function toggleCloud(){
+    cloudOn=!cloudOn;
+    localStorage.setItem(CLOUD_KEY,cloudOn?'1':'0');
+    var b=document.getElementById('btnCloud');
+    b.style.outline = cloudOn?'2px solid var(--accent)':'none';
+    if(cloudOn){
+      loadFromCloud().then(function(){ persist(); renderList(); });
+    }
+  }
+  document.getElementById('btnCloud').addEventListener('click',toggleCloud);
 
-const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-const tagsOf=n=>[...new Set(((n.body||'').match(/#[^\s#]+/g)||[]).map(t=>t.slice(1)))];
-const fmt=t=>new Date(t).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});
-const cur=()=>notes.find(n=>n.id===currentId);
-const persist=()=>{save(KEY,notes);$('#saved').textContent='已儲存 '+new Date().toLocaleTimeString('zh-TW',{hour12:false})};
-
-function newNote(){
-  const n={id:uid(),title:'',body:'',pinned:false,created:Date.now(),updated:Date.now()};
-  notes.unshift(n);currentId=n.id;persist();render();$('#title').focus();closeSide();
-}
-function render(){
-  renderFilters();renderList();renderEditor();
-}
-function renderFilters(){
-  const all=[...new Set(notes.flatMap(tagsOf))].sort();
-  const box=$('#filters');box.innerHTML='';
-  if(filterTag&&!all.includes(filterTag))filterTag=null;
-  all.forEach(t=>{
-    const b=document.createElement('button');
-    b.className='chip'+(t===filterTag?' on':'');b.textContent='#'+t;
-    b.onclick=()=>{filterTag=filterTag===t?null:t;renderFilters();renderList()};
-    box.appendChild(b);
+  // ---------- theme ----------
+  function applyTheme(t){
+    document.body.setAttribute('data-theme',t);
+    var b=document.getElementById('btnTheme');
+    b.firstChild.textContent = (t==='dark')?'☀️':'🌙';
+  }
+  document.getElementById('btnTheme').addEventListener('click',function(){
+    var cur=document.body.getAttribute('data-theme');
+    var next=(cur==='dark')?'light':'dark';
+    applyTheme(next);
+    localStorage.setItem(THEME_KEY,next);
   });
-}
-function renderList(){
-  const q=$('#search').value.trim().toLowerCase();
-  const items=notes.filter(n=>{
-    if(filterTag&&!tagsOf(n).includes(filterTag))return false;
-    return !q||(n.title+' '+n.body).toLowerCase().includes(q);
-  }).sort((a,b)=>(b.pinned-a.pinned)||(b.updated-a.updated));
-  const ul=$('#list');ul.innerHTML='';
-  items.forEach(n=>{
-    const li=document.createElement('li');
-    li.className=n.id===currentId?'active':'';
-    const t=document.createElement('div');t.className='t';
-    t.innerHTML=(n.pinned?'<span>📌</span>':'')+'<span></span>';
-    t.lastChild.textContent=n.title||'無標題';
-    const p=document.createElement('div');p.className='p';p.textContent=(n.body||'').replace(/\s+/g,' ').slice(0,60)||'（空白）';
-    const d=document.createElement('div');d.className='d';d.textContent=fmt(n.updated);
-    li.append(t,p,d);
-    li.onclick=()=>{currentId=n.id;render();closeSide()};
-    ul.appendChild(li);
+
+  // ---------- font ----------
+  function applyFont(){
+    document.getElementById('body').style.fontSize=fontSize+'px';
+    document.getElementById('title').style.fontSize=(fontSize*1.25)+'px';
+    document.getElementById('fontSize').textContent=fontSize+'px';
+  }
+  function changeFont(delta){
+    fontSize=Math.max(11,Math.min(30,fontSize+delta));
+    applyFont();
+    localStorage.setItem(FONT_KEY,String(fontSize));
+  }
+  document.getElementById('btnFont').addEventListener('click',function(){
+    // 循環：在常用字級間切換
+    var steps=[14,16,18,20,24];
+    var i=steps.indexOf(fontSize);
+    fontSize=steps[(i+1+steps.length)%steps.length];
+    applyFont();
+    localStorage.setItem(FONT_KEY,String(fontSize));
   });
-  if(!items.length){ul.innerHTML='<li style="cursor:default;color:var(--muted);text-align:center">沒有符合的筆記</li>'}
-}
-function renderEditor(){
-  const n=cur();
-  const has=!!n;
-  $('#body').hidden=!has;$('#empty').hidden=has;
-  ['#title','#pin','#copy','#dl','#del'].forEach(s=>$(s).disabled=!has);
-  if(!has){$('#title').value='';$('#count').textContent='0 字';$('#tagInfo').textContent='';return}
-  if($('#title').value!==n.title)$('#title').value=n.title;
-  if($('#body').value!==n.body)$('#body').value=n.body;
-  $('#pin').classList.toggle('on',n.pinned);
-  updateStats();
-}
-function updateStats(){
-  const n=cur();if(!n)return;
-  const t=n.body.replace(/\s/g,'').length;
-  $('#count').textContent=t+' 字';
-  const tg=tagsOf(n);$('#tagInfo').textContent=tg.length?tg.map(x=>'#'+x).join(' '):'提示:內文輸入 #標籤 可分類';
-}
-function edit(){
-  const n=cur();if(!n)return;
-  n.title=$('#title').value;n.body=$('#body').value;n.updated=Date.now();
-  $('#saved').textContent='儲存中…';updateStats();
-  clearTimeout(timer);timer=setTimeout(()=>{persist();renderFilters();renderList()},400);
-}
-function closeSide(){$('#side').classList.remove('open')}
-function download(name,text,type='text/plain'){
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([text],{type:type+';charset=utf-8'}));
-  a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);
-}
+  document.getElementById('fontDown').addEventListener('click',function(){changeFont(-1)});
+  document.getElementById('fontUp').addEventListener('click',function(){changeFont(1)});
 
-$('#newBtn').onclick=newNote;
-$('#title').oninput=edit;$('#body').oninput=edit;
-$('#search').oninput=renderList;
-$('#menu').onclick=()=>$('#side').classList.toggle('open');
-$('#pin').onclick=()=>{const n=cur();if(!n)return;n.pinned=!n.pinned;persist();render()};
-$('#del').onclick=()=>{
-  const n=cur();if(!n||!confirm('確定刪除「'+(n.title||'無標題')+'」?'))return;
-  notes=notes.filter(x=>x.id!==n.id);currentId=notes[0]?.id||null;persist();render();
-};
-$('#copy').onclick=async()=>{
-  const n=cur();if(!n)return;
-  try{await navigator.clipboard.writeText(n.title+'\n\n'+n.body);$('#saved').textContent='已複製'}catch{$('#body').select();document.execCommand('copy')}
-};
-$('#dl').onclick=()=>{const n=cur();if(n)download((n.title||'note')+'.txt',n.title+'\n\n'+n.body)};
-$('#exportAll').onclick=()=>download('notebook-backup.json',JSON.stringify(notes,null,2),'application/json');
+  // ---------- notes CRUD ----------
+  function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+  function findNote(id){return notes.find(function(n){return n.id===id})}
 
-$('#theme').onclick=()=>{settings.theme=settings.theme==='dark'?'light':'dark';applySettings()};
-$('#aa').onclick=e=>{e.stopPropagation();$('#pop').classList.toggle('show')};
-$('#pop').onclick=e=>e.stopPropagation();
-document.addEventListener('click',()=>$('#pop').classList.remove('show'));
-document.querySelectorAll('#ffSeg button').forEach(b=>b.onclick=()=>{settings.font=b.dataset.f;applySettings()});
-$('#fs').oninput=e=>{settings.size=+e.target.value;applySettings()};
-$('#lh').oninput=e=>{settings.lh=+(+e.target.value).toFixed(1);applySettings()};
-$('#reset').onclick=()=>{Object.assign(settings,{font:'sans',size:17,lh:1.8});applySettings()};
+  function newNote(){
+    var n={id:uid(),title:'',body:''};
+    notes.unshift(n);
+    currentId=n.id;
+    persist();
+    renderList();
+    loadIntoEditor(n);
+    document.getElementById('title').focus();
+  }
+  document.getElementById('btnNew').addEventListener('click',newNote);
 
-document.addEventListener('keydown',e=>{
-  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();clearTimeout(timer);persist()}
-  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#search').focus()}
-  if(e.key==='Escape')$('#pop').classList.remove('show');
-});
+  function openNote(id){
+    var n=findNote(id); if(!n)return;
+    currentId=id;
+    loadIntoEditor(n);
+    renderList();
+  }
 
-applySettings();
-if(!notes.length){
-  notes=[{id:uid(),title:'歡迎使用',pinned:true,created:Date.now(),updated:Date.now(),
-    body:'這是你的多功能筆記本 #教學\n\n• 右上角 🌙 / ☀️ 切換日夜模式\n• 右上角 Aa 調整字型、字級、行距\n• 在內文輸入 #標籤,左側可依標籤篩選\n• 📌 釘選、⧉ 複製、⇩ 下載、🗑 刪除\n• Ctrl/⌘+K 搜尋,Ctrl/⌘+S 立即儲存\n• 所有內容只存在你的瀏覽器(localStorage),左上 ⬇ 可匯出備份'}];
-  save(KEY,notes);
-}
-currentId=notes.slice().sort((a,b)=>(b.pinned-a.pinned)||(b.updated-a.updated))[0]?.id||null;
-render();
+  function loadIntoEditor(n){
+    document.getElementById('title').value=n.title;
+    document.getElementById('body').value=n.body;
+    updateCount();
+  }
+
+  function updateCount(){
+    var b=document.getElementById('body').value;
+    var w=b.replace(/\s+/g,'').length;
+    document.getElementById('wordCount').textContent=w+' 字';
+  }
+
+  function markDirty(){
+    var dot=document.getElementById('saveDot');
+    dot.textContent='輸入中…'; dot.className='save-dot pending';
+    clearTimeout(saveTimer);
+    saveTimer=setTimeout(saveCurrent,500);
+  }
+  function saveCurrent(){
+    if(!currentId)return;
+    var n=findNote(currentId); if(!n)return;
+    n.title=document.getElementById('title').value;
+    n.body=document.getElementById('body').value;
+    persist();
+    var dot=document.getElementById('saveDot');
+    dot.textContent='已儲存'; dot.className='save-dot saved';
+    renderList();
+  }
+
+  document.getElementById('title').addEventListener('input',markDirty);
+  document.getElementById('body').addEventListener('input',function(){updateCount();markDirty()});
+
+  function deleteNote(){
+    if(!currentId)return;
+    var n=findNote(currentId);
+    var title=n.title||'(無標題)';
+    showConfirm('刪除筆記', '確定要刪除「'+title+'」？此操作無法復原。', function(){
+      notes=notes.filter(function(x){return x.id!==currentId});
+      persist();
+      if(notes.length){ openNote(notes[0].id); } else { currentId=null; newNote(); }
+      else { renderList(); document.getElementById('title').value=''; document.getElementById('body').value=''; updateCount(); }
+    });
+  }
+  document.getElementById('btnDelete').addEventListener('click',deleteNote);
+
+  // ---------- export / import ----------
+  function exportAll(){
+    var blob=new Blob([JSON.stringify(notes,null,2)],{type:'application/json'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url; a.download='notepad-export-'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+  document.getElementById('btnExport').addEventListener('click',function(){
+    if(!notes.length){alert('目前沒有筆記可匯出');return}
+    showConfirm('匯出全部筆記','將匯出 '+notes.length+' 筆筆記為 JSON 檔案。',function(){exportAll()});
+  });
+
+  // ---------- more menu (import) ----------
+  var importHandler=null;
+  document.getElementById('btnMore').addEventListener('click',function(){
+    importHandler=function(){importAll()};
+    showConfirm('匯入 JSON','選擇一個先前匯出的 notepad JSON 檔以還原筆記。',function(){
+      var inp=document.createElement('input'); inp.type='file'; inp.accept='application/json,.json';
+      inp.onchange=function(e){
+        var f=e.target.files[0]; if(!f)return;
+        var r=new FileReader();
+        r.onload=function(){
+          try{
+            var data=JSON.parse(r.result);
+            if(!Array.isArray(data))throw new Error('bad');
+            var idmap={};
+            data.forEach(function(n){
+              if(n.title||n.body){
+                if(notes.some(function(x){return x.id===n.id})){ idmap[n.id]=uid(); }
+                else idmap[n.id]=n.id;
+                notes.push({id:idmap[n.id],title:n.title||'',body:n.body||''});
+              }
+            });
+            persist(); renderList();
+            if(notes.length) openNote(notes[0].id);
+            alert('匯入完成');
+          }catch(err){ alert('檔案格式錯誤，無法匯入'); }
+        };
+        r.readAsText(f);
+      };
+      inp.click();
+    });
+  });
+
+  // ---------- list render ----------
+  function renderList(){
+    var list=document.getElementById('list');
+    if(!notes.length){ list.innerHTML='<div class="empty">尚無筆記<br>點「＋ 新增筆記」開始</div>'; return; }
+    list.innerHTML='';
+    notes.forEach(function(n){
+      var div=document.createElement('div');
+      div.className='item'+(n.id===currentId?' active':'');
+      div.innerHTML='<div class="t">'+(esc(n.title)||'無標題')+'</div><div class="d">'+(esc(n.body).slice(0,30)||'空筆記')+'</div>';
+      div.addEventListener('click',function(){openNote(n.id)});
+      list.appendChild(div);
+    });
+  }
+  function esc(s){return (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+  // ---------- confirm modal ----------
+  var modalBg=document.getElementById('modalBg');
+  var modalOk=document.getElementById('modalOk');
+  var modalCancel=document.getElementById('modalCancel');
+  var modalTitle=document.getElementById('modalTitle');
+  var modalMsg=document.getElementById('modalOk');
+  var pendingConfirm=null;
+  function showConfirm(title,msg,cb){
+    modalTitle.textContent=title;
+    modalOk.textContent='確認'; modalCancel.textContent='取消';
+    // 顯示訊息：用一個暫時元素
+    var box=modalOk.parentElement;
+    var m=document.getElementById('modalMsg');
+    if(!m){ m=document.createElement('p'); m.id='modalMsg'; m.style.cssText='margin:0 0 14px;font-size:14px;color:var(--sub);white-space:pre-wrap'; box.insertBefore(m,box.firstChild); }
+    m.textContent=msg;
+    pendingConfirm=cb;
+    modalBg.classList.add('show');
+  }
+  modalOk.addEventListener('click',function(){
+    modalBg.classList.remove('show');
+    if(pendingConfirm){var cb=pendingConfirm;pendingConfirm=null;cb()}
+  });
+  modalCancel.addEventListener('click',function(){ modalBg.classList.remove('show'); pendingConfirm=null; });
+  modalBg.addEventListener('click',function(e){ if(e.target===modalBg){ modalBg.classList.remove('show'); pendingConfirm=null; }});
+
+  // ---------- keyboard ----------
+  document.addEventListener('keydown',function(e){
+    if((e.metaKey||e.ctrlKey)&&e.key==='s'){ e.preventDefault(); saveCurrent(); }
+    if((e.metaKey||e.ctrlKey)&&e.key==='n'){ e.preventDefault(); newNote(); }
+    if((e.metaKey||e.ctrlKey)&&e.key==='f'){ e.preventDefault(); changeFont(1); }
+  });
+
+  // ---------- init ----------
+  load();
+  cloudOn = localStorage.getItem(CLOUD_KEY)==='1';
+  if(cloudOn){
+    document.getElementById('btnCloud').style.outline='2px solid var(--accent)';
+    // 先讀雲端再合併本地
+    loadFromCloud().then(function(){
+      persist();
+      if(notes.length){ openNote(notes[0].id); } else { newNote(); }
+      renderList();
+    });
+  } else {
+    if(notes.length){ openNote(notes[0].id); renderList(); }
+    else { newNote(); }
+  }
+
+  window.addEventListener('beforeunload',function(){ saveCurrent(); if(cloudOn) syncToCloud(); });
 })();
 </script>
 </body>
