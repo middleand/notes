@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>多功能筆記本</title>
+<style>
+:root{
+  --bg:#f6f4ef;--panel:#ffffff;--side:#efece4;--text:#2b2a27;--muted:#8a867c;
+  --accent:#d9822b;--border:#e1ddd2;--shadow:0 8px 30px rgba(0,0,0,.12);
+  --fs:17px;--ff:system-ui,-apple-system,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+}
+:root[data-theme="dark"]{
+  --bg:#17181c;--panel:#1f2127;--side:#1b1c21;--text:#e8e6e1;--muted:#8d8f98;
+  --accent:#f0a24b;--border:#2d3038;--shadow:0 8px 30px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font-family:var(--ff);transition:background .3s,color .3s}
+button{font:inherit;color:inherit;cursor:pointer}
+.app{display:grid;grid-template-columns:300px 1fr;height:100%}
+aside{background:var(--side);border-right:1px solid var(--border);display:flex;flex-direction:column;min-height:0}
+.top{display:flex;gap:8px;align-items:center;padding:14px;border-bottom:1px solid var(--border)}
+.top h1{font-size:18px;margin:0;flex:1}
+.ibtn{border:1px solid var(--border);background:var(--panel);border-radius:10px;min-width:38px;height:38px;display:grid;place-items:center;font-size:16px;transition:.2s}
+.ibtn:hover{border-color:var(--accent);color:var(--accent)}
+.ibtn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tools{padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.tools input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--panel);color:var(--text);font:inherit;font-size:14px}
+.tools input:focus,#title:focus{outline:2px solid var(--accent);outline-offset:0}
+.newbtn{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:10px;font-weight:600}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:12px;padding:4px 10px;border-radius:99px;border:1px solid var(--border);background:var(--panel);color:var(--muted)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+#list{flex:1;overflow:auto;padding:4px 10px 14px;margin:0;list-style:none}
+#list li{padding:11px 12px;border-radius:10px;cursor:pointer;margin-bottom:4px;border:1px solid transparent}
+#list li:hover{background:var(--panel)}
+#list li.active{background:var(--panel);border-color:var(--accent)}
+#list .t{font-weight:600;font-size:14px;display:flex;gap:6px;align-items:center}
+#list .t span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#list .p{font-size:12px;color:var(--muted);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#list .d{font-size:11px;color:var(--muted);margin-top:3px}
+main{display:flex;flex-direction:column;min-width:0;min-height:0}
+.bar{display:flex;gap:8px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.bar .sp{flex:1}
+.menu{display:none}
+#title{flex:1;min-width:140px;border:0;background:transparent;color:var(--text);font:inherit;font-size:22px;font-weight:700;padding:6px 8px;border-radius:8px}
+.editor{flex:1;min-height:0;display:flex;flex-direction:column;position:relative}
+#body{flex:1;width:100%;border:0;resize:none;background:var(--panel);color:var(--text);font-family:var(--ff);font-size:var(--fs);line-height:var(--lh,1.8);padding:24px clamp(18px,5vw,64px);outline:none;transition:background .3s}
+.status{display:flex;gap:14px;padding:8px 18px;font-size:12px;color:var(--muted);border-top:1px solid var(--border)}
+.status .sp{flex:1}
+.empty{flex:1;display:grid;place-items:center;color:var(--muted);text-align:center;padding:30px}
+.pop{position:absolute;right:18px;top:62px;z-index:20;width:280px;background:var(--panel);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:16px;display:none}
+.pop.show{display:block}
+.pop h3{margin:0 0 12px;font-size:14px}
+.pop label{display:block;font-size:12px;color:var(--muted);margin:12px 0 6px}
+.pop input[type=range]{width:100%;accent-color:var(--accent)}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.seg button{border:1px solid var(--border);background:var(--bg);border-radius:8px;padding:8px 2px;font-size:13px}
+.seg button.on{border-color:var(--accent);color:var(--accent);font-weight:700}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)}
+.row b{color:var(--text)}
+.reset{margin-top:14px;width:100%;border:1px solid var(--border);background:transparent;border-radius:8px;padding:8px;font-size:13px}
+@media(max-width:760px){
+  .app{grid-template-columns:1fr}
+  aside{position:fixed;inset:0 25% 0 0;z-index:30;transform:translateX(-100%);transition:transform .25s;box-shadow:var(--shadow)}
+  aside.open{transform:none}
+  .menu{display:grid}
+  .pop{right:10px;left:10px;width:auto}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside id="side">
+    <div class="top">
+      <h1>📒 我的筆記</h1>
+      <button class="ibtn" id="exportAll" title="匯出全部 (JSON)">⬇</button>
+    </div>
+    <div class="tools">
+      <button class="newbtn" id="newBtn">＋ 新增筆記</button>
+      <input id="search" placeholder="搜尋標題或內容…" type="search">
+      <div class="tags" id="filters"></div>
+    </div>
+    <ul id="list"></ul>
+  </aside>
+
+  <main>
+    <div class="bar">
+      <button class="ibtn menu" id="menu" title="清單">☰</button>
+      <input id="title" placeholder="標題" maxlength="120">
+      <button class="ibtn" id="pin" title="釘選">📌</button>
+      <button class="ibtn" id="copy" title="複製內容">⧉</button>
+      <button class="ibtn" id="dl" title="下載為 .txt">⇩</button>
+      <button class="ibtn" id="del" title="刪除">🗑</button>
+      <span class="sp"></span>
+      <button class="ibtn" id="aa" title="字體設定" style="font-weight:700">Aa</button>
+      <button class="ibtn" id="theme" title="日夜切換">🌙</button>
+    </div>
+    <div class="editor" id="editor">
+      <div class="pop" id="pop">
+        <h3>字體設定</h3>
+        <label>字型</label>
+        <div class="seg" id="ffSeg">
+          <button data-f="sans">黑體</button>
+          <button data-f="serif">明體</button>
+          <button data-f="mono">等寬</button>
+          <button data-f="hand">手寫</button>
+        </div>
+        <label><span class="row"><span>字級</span><b id="fsVal">17px</b></span></label>
+        <input type="range" id="fs" min="12" max="32" step="1">
+        <label><span class="row"><span>行距</span><b id="lhVal">1.8</b></span></label>
+        <input type="range" id="lh" min="1.2" max="2.6" step="0.1">
+        <button class="reset" id="reset">還原預設</button>
+      </div>
+      <textarea id="body" placeholder="開始寫點什麼…"></textarea>
+      <div class="empty" id="empty" hidden>沒有筆記。按左側「新增筆記」開始。</div>
+    </div>
+    <div class="status"><span id="count">0 字</span><span id="tagInfo"></span><span class="sp"></span><span id="saved">已儲存</span></div>
+  </main>
+</div>
+
+<script>
+(()=>{
+const $=s=>document.querySelector(s);
+const KEY='notebook.v1', SKEY='notebook.settings.v1';
+const FONTS={
+  sans:'system-ui,-apple-system,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif',
+  serif:'"Noto Serif TC","Songti TC","PMingLiU",Georgia,serif',
+  mono:'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace',
+  hand:'"Kaiti TC","DFKai-SB","BiauKai","Comic Sans MS",cursive'
+};
+const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}};
+const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+
+let notes=load(KEY,[]);
+let settings=Object.assign({theme:null,font:'sans',size:17,lh:1.8},load(SKEY,{}));
+let currentId=null, filterTag=null, timer;
+
+// theme: default to system, then user's choice
+if(!settings.theme) settings.theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+
+function applySettings(){
+  const r=document.documentElement;
+  r.dataset.theme=settings.theme;
+  r.style.setProperty('--ff',FONTS[settings.font]);
+  r.style.setProperty('--fs',settings.size+'px');
+  r.style.setProperty('--lh',settings.lh);
+  $('#theme').textContent=settings.theme==='dark'?'☀️':'🌙';
+  $('#fs').value=settings.size;$('#fsVal').textContent=settings.size+'px';
+  $('#lh').value=settings.lh;$('#lhVal').textContent=settings.lh;
+  document.querySelectorAll('#ffSeg button').forEach(b=>b.classList.toggle('on',b.dataset.f===settings.font));
+  save(SKEY,settings);
+}
+
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const tagsOf=n=>[...new Set(((n.body||'').match(/#[^\s#]+/g)||[]).map(t=>t.slice(1)))];
+const fmt=t=>new Date(t).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});
+const cur=()=>notes.find(n=>n.id===currentId);
+const persist=()=>{save(KEY,notes);$('#saved').textContent='已儲存 '+new Date().toLocaleTimeString('zh-TW',{hour12:false})};
+
+function newNote(){
+  const n={id:uid(),title:'',body:'',pinned:false,created:Date.now(),updated:Date.now()};
+  notes.unshift(n);currentId=n.id;persist();render();$('#title').focus();closeSide();
+}
+function render(){
+  renderFilters();renderList();renderEditor();
+}
+function renderFilters(){
+  const all=[...new Set(notes.flatMap(tagsOf))].sort();
+  const box=$('#filters');box.innerHTML='';
+  if(filterTag&&!all.includes(filterTag))filterTag=null;
+  all.forEach(t=>{
+    const b=document.createElement('button');
+    b.className='chip'+(t===filterTag?' on':'');b.textContent='#'+t;
+    b.onclick=()=>{filterTag=filterTag===t?null:t;renderFilters();renderList()};
+    box.appendChild(b);
+  });
+}
+function renderList(){
+  const q=$('#search').value.trim().toLowerCase();
+  const items=notes.filter(n=>{
+    if(filterTag&&!tagsOf(n).includes(filterTag))return false;
+    return !q||(n.title+' '+n.body).toLowerCase().includes(q);
+  }).sort((a,b)=>(b.pinned-a.pinned)||(b.updated-a.updated));
+  const ul=$('#list');ul.innerHTML='';
+  items.forEach(n=>{
+    const li=document.createElement('li');
+    li.className=n.id===currentId?'active':'';
+    const t=document.createElement('div');t.className='t';
+    t.innerHTML=(n.pinned?'<span>📌</span>':'')+'<span></span>';
+    t.lastChild.textContent=n.title||'無標題';
+    const p=document.createElement('div');p.className='p';p.textContent=(n.body||'').replace(/\s+/g,' ').slice(0,60)||'（空白）';
+    const d=document.createElement('div');d.className='d';d.textContent=fmt(n.updated);
+    li.append(t,p,d);
+    li.onclick=()=>{currentId=n.id;render();closeSide()};
+    ul.appendChild(li);
+  });
+  if(!items.length){ul.innerHTML='<li style="cursor:default;color:var(--muted);text-align:center">沒有符合的筆記</li>'}
+}
+function renderEditor(){
+  const n=cur();
+  const has=!!n;
+  $('#body').hidden=!has;$('#empty').hidden=has;
+  ['#title','#pin','#copy','#dl','#del'].forEach(s=>$(s).disabled=!has);
+  if(!has){$('#title').value='';$('#count').textContent='0 字';$('#tagInfo').textContent='';return}
+  if($('#title').value!==n.title)$('#title').value=n.title;
+  if($('#body').value!==n.body)$('#body').value=n.body;
+  $('#pin').classList.toggle('on',n.pinned);
+  updateStats();
+}
+function updateStats(){
+  const n=cur();if(!n)return;
+  const t=n.body.replace(/\s/g,'').length;
+  $('#count').textContent=t+' 字';
+  const tg=tagsOf(n);$('#tagInfo').textContent=tg.length?tg.map(x=>'#'+x).join(' '):'提示:內文輸入 #標籤 可分類';
+}
+function edit(){
+  const n=cur();if(!n)return;
+  n.title=$('#title').value;n.body=$('#body').value;n.updated=Date.now();
+  $('#saved').textContent='儲存中…';updateStats();
+  clearTimeout(timer);timer=setTimeout(()=>{persist();renderFilters();renderList()},400);
+}
+function closeSide(){$('#side').classList.remove('open')}
+function download(name,text,type='text/plain'){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([text],{type:type+';charset=utf-8'}));
+  a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500);
+}
+
+$('#newBtn').onclick=newNote;
+$('#title').oninput=edit;$('#body').oninput=edit;
+$('#search').oninput=renderList;
+$('#menu').onclick=()=>$('#side').classList.toggle('open');
+$('#pin').onclick=()=>{const n=cur();if(!n)return;n.pinned=!n.pinned;persist();render()};
+$('#del').onclick=()=>{
+  const n=cur();if(!n||!confirm('確定刪除「'+(n.title||'無標題')+'」?'))return;
+  notes=notes.filter(x=>x.id!==n.id);currentId=notes[0]?.id||null;persist();render();
+};
+$('#copy').onclick=async()=>{
+  const n=cur();if(!n)return;
+  try{await navigator.clipboard.writeText(n.title+'\n\n'+n.body);$('#saved').textContent='已複製'}catch{$('#body').select();document.execCommand('copy')}
+};
+$('#dl').onclick=()=>{const n=cur();if(n)download((n.title||'note')+'.txt',n.title+'\n\n'+n.body)};
+$('#exportAll').onclick=()=>download('notebook-backup.json',JSON.stringify(notes,null,2),'application/json');
+
+$('#theme').onclick=()=>{settings.theme=settings.theme==='dark'?'light':'dark';applySettings()};
+$('#aa').onclick=e=>{e.stopPropagation();$('#pop').classList.toggle('show')};
+$('#pop').onclick=e=>e.stopPropagation();
+document.addEventListener('click',()=>$('#pop').classList.remove('show'));
+document.querySelectorAll('#ffSeg button').forEach(b=>b.onclick=()=>{settings.font=b.dataset.f;applySettings()});
+$('#fs').oninput=e=>{settings.size=+e.target.value;applySettings()};
+$('#lh').oninput=e=>{settings.lh=+(+e.target.value).toFixed(1);applySettings()};
+$('#reset').onclick=()=>{Object.assign(settings,{font:'sans',size:17,lh:1.8});applySettings()};
+
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();clearTimeout(timer);persist()}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#search').focus()}
+  if(e.key==='Escape')$('#pop').classList.remove('show');
+});
+
+applySettings();
+if(!notes.length){
+  notes=[{id:uid(),title:'歡迎使用',pinned:true,created:Date.now(),updated:Date.now(),
+    body:'這是你的多功能筆記本 #教學\n\n• 右上角 🌙 / ☀️ 切換日夜模式\n• 右上角 Aa 調整字型、字級、行距\n• 在內文輸入 #標籤,左側可依標籤篩選\n• 📌 釘選、⧉ 複製、⇩ 下載、🗑 刪除\n• Ctrl/⌘+K 搜尋,Ctrl/⌘+S 立即儲存\n• 所有內容只存在你的瀏覽器(localStorage),左上 ⬇ 可匯出備份'}];
+  save(KEY,notes);
+}
+currentId=notes.slice().sort((a,b)=>(b.pinned-a.pinned)||(b.updated-a.updated))[0]?.id||null;
+render();
+})();
+</script>
+</body>
+</html>
