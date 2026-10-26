@@ -186,7 +186,7 @@ footer .grow{flex:1}
     var rows=notes.map(function(n){return {id:n.id,title:n.title||'',body:n.body||'',owner:OWNER,updated_at:new Date().toISOString()}});
     fetch(SB_URL+'/rest/v1/'+SB_TABLE,{
       method:'POST',
-      headers:Object.assign(sbHeaders(),{'Prefer':'resolution=merge,return=minimal'}),
+      headers:Object.assign(sbHeaders(),{'Prefer':'resolution=merge-duplicates,return=minimal'}),
       body:JSON.stringify(rows)
     }).then(function(r){
       setCloudDot(r.ok?'cloud:ok':'cloud:fail');
